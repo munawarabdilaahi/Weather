@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { fetchCurrentWeather, fetchHourlyForecast, MOCK_WEATHER_DATA } from '../services/weatherApi'
 import { CITIES_COORDS } from '@/constants/cities'
 
@@ -10,16 +10,20 @@ export function useWeather(city, { autoRefresh, refreshInterval } = {}) {
   const [error, setError] = useState(null)
   const [isMock, setIsMock] = useState(false)
   const intervalRef = useRef(null)
+  const loadRef = useRef(null)
 
   useEffect(() => {
     let cancelled = false
 
     async function load() {
+      loadRef.current = load
       setLoading(true)
       setError(null)
 
-      const current = await fetchCurrentWeather(city)
-      const hourly = await fetchHourlyForecast(city)
+      const [current, hourly] = await Promise.all([
+        fetchCurrentWeather(city),
+        fetchHourlyForecast(city),
+      ])
 
       if (cancelled) return
 
@@ -52,10 +56,15 @@ export function useWeather(city, { autoRefresh, refreshInterval } = {}) {
     return () => {
       cancelled = true
       if (intervalRef.current) clearInterval(intervalRef.current)
+      loadRef.current = null
     }
   }, [city, autoRefresh, refreshInterval])
 
-  return { data, loading, error, isMock }
+  const refetch = useCallback(() => {
+    loadRef.current?.()
+  }, [])
+
+  return { data, loading, error, isMock, refetch }
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']

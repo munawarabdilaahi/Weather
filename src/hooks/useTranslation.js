@@ -1,10 +1,9 @@
 import { useMemo } from 'react'
-import { useApp } from './useApp'
+import { useLanguage } from './useLanguage'
 import { translations } from '../translations'
 
 export function useTranslation() {
-  const { settings } = useApp()
-  const lang = settings.language
+  const lang = useLanguage()
 
   return useMemo(() => {
     function t(key) {
