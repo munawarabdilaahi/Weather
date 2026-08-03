@@ -11,7 +11,7 @@ export function Toggle({ enabled, onChange, disabled = false, label }) {
       onClick={() => !disabled && onChange(!enabled)}
       disabled={disabled}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        enabled ? 'bg-blue-600' : 'bg-secondary'
+        enabled ? 'bg-primary' : 'bg-secondary'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
       <span

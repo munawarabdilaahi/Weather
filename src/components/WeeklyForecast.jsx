@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react';
 import { Card, CardHeader, CardTitle } from './Card';
 import { WeatherIcon } from './WeatherIcon';
 import { useTranslation } from '@/hooks/useTranslation';
+import { convertTemp } from '@/utils/units';
 
 const CONDITION_KEYS = {
   'Sunny': 'weather.sunny',
@@ -9,10 +10,6 @@ const CONDITION_KEYS = {
   'Rainy': 'weather.rainy',
   'Clear': 'weather.clear',
   'Partly Cloudy': 'weather.partlyCloudy',
-}
-
-function convertTemp(celsius, unit) {
-  return unit === 'F' ? Math.round(celsius * 9 / 5 + 32) : celsius
 }
 
 const WeeklyForecast = memo(function WeeklyForecast({ data, unit }) {
@@ -43,7 +40,7 @@ const WeeklyForecast = memo(function WeeklyForecast({ data, unit }) {
                 </td>
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-4">
-                    <div className="h-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full" style={{ width: `${(day.high / maxHigh) * 100}px` }} />
+                    <div className="h-2 bg-gradient-to-r from-primary to-accent rounded-full" style={{ width: `${(day.high / maxHigh) * 100}px` }} />
                     <div className="flex gap-2 min-w-[80px] justify-end">
                       <span className="font-bold text-foreground">{convertTemp(day.high, unit)}°</span>
                       <span className="text-muted-foreground">{convertTemp(day.low, unit)}°</span>
