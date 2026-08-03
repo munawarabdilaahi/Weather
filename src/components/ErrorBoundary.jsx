@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component {
             <Link
               to="/"
               onClick={() => this.setState({ error: null })}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition"
+              className="inline-flex items-center px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition"
             >
               Back to Home
             </Link>
