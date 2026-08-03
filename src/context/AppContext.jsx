@@ -1,6 +1,5 @@
-import { useState, useCallback, useEffect } from 'react'
-import { AppContext } from './context'
-import { CITIES } from '@/constants/cities'
+import { useState, useCallback, useEffect, useMemo } from 'react'
+import { AppContext, SettingsContext, LanguageContext } from './context'
 
 const ACCENT_PALETTE = {
   blue:   { primary: '#3b82f6', accent: '#06b6d4' },
@@ -122,19 +121,27 @@ export function AppProvider({ children }) {
     setSettings(DEFAULT_SETTINGS)
   }, [])
 
-  const value = {
+  const appValue = useMemo(() => ({
     selectedCity,
     setSelectedCity,
+    sidebarCollapsed,
+    setSidebarCollapsed,
+  }), [selectedCity, sidebarCollapsed])
+
+  const settingsValue = useMemo(() => ({
     settings,
     updateSetting,
     toggleSetting,
     resetSettings,
-    sidebarCollapsed,
-    setSidebarCollapsed,
-    cities: CITIES,
-  }
+  }), [settings, updateSetting, toggleSetting, resetSettings])
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>
+  return (
+    <AppContext.Provider value={appValue}>
+      <SettingsContext.Provider value={settingsValue}>
+        <LanguageContext.Provider value={settings.language}>
+          {children}
+        </LanguageContext.Provider>
+      </SettingsContext.Provider>
+    </AppContext.Provider>
+  )
 }
-
-
