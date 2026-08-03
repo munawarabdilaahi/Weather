@@ -2,14 +2,18 @@ import { Palette, Wind, Globe, MapPin, Bell, RotateCw, Trash2, Info, Download, S
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { Toggle } from '@/components/Toggle';
-import { useApp } from '@/hooks/useApp';
+import { RadioGroup } from '@/components/RadioGroup';
+import { useSettings } from '@/hooks/useSettings';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useToast } from '@/hooks/useToast';
+import { CITIES } from '@/constants/cities';
 
 export default function SettingsPage() {
-  const { settings, updateSetting, toggleSetting, resetSettings, cities } = useApp();
+  const { settings, updateSetting, toggleSetting, resetSettings } = useSettings();
   const { t } = useTranslation();
+  const { toast } = useToast();
 
-  const notify = (msg) => alert(msg)
+  const notify = (msg) => toast.success(msg)
 
   const accentColors = [
     { name: 'Blue', value: 'blue', class: 'bg-blue-600' },
@@ -41,7 +45,7 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-foreground block mb-3">{t('settings.theme')}</label>
-                <div className="flex gap-3">
+                <RadioGroup label={t('settings.theme')} className="flex gap-3">
                   {['light', 'dark', 'system'].map((mode) => (
                     <button
                       key={mode}
@@ -50,22 +54,25 @@ export default function SettingsPage() {
                       onClick={() => updateSetting('appearance', mode)}
                       className={`px-4 py-2 rounded-lg transition capitalize ${
                         settings.appearance === mode
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-primary text-primary-foreground'
                           : 'bg-secondary text-foreground hover:bg-secondary/80'
                       }`}
                     >
                       {t('settings.theme' + mode.charAt(0).toUpperCase() + mode.slice(1))}
                     </button>
                   ))}
-                </div>
+                </RadioGroup>
               </div>
 
               <div>
                 <label className="text-sm font-medium text-foreground block mb-3">{t('settings.accentColor')}</label>
-                <div className="flex gap-2 flex-wrap">
+                <RadioGroup label={t('settings.accentColor')} className="flex gap-2 flex-wrap">
                   {accentColors.map((color) => (
                     <button
                       key={color.value}
+                      role="radio"
+                      aria-checked={settings.accentColor === color.value}
+                      aria-label={color.name}
                       onClick={() => updateSetting('accentColor', color.value)}
                       className={`w-12 h-12 rounded-lg ${color.class} transition transform hover:scale-110 ${
                         settings.accentColor === color.value ? 'ring-2 ring-offset-2 ring-foreground' : ''
@@ -73,11 +80,11 @@ export default function SettingsPage() {
                       title={color.name}
                     >
                       {settings.accentColor === color.value && (
-                        <Check size={24} className="text-white mx-auto" />
+                        <Check size={24} className="text-white mx-auto" aria-hidden="true" />
                       )}
                     </button>
                   ))}
-                </div>
+                </RadioGroup>
               </div>
             </CardContent>
           </Card>
@@ -92,30 +99,33 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-foreground block mb-2">{t('settings.temperature')}</label>
-                <div className="flex gap-3">
+                <label className="text-sm font-medium text-foreground block mb-2" htmlFor="settings-temp-unit">{t('settings.temperature')}</label>
+                <RadioGroup label={t('settings.temperature')} className="flex gap-3">
                   {['C', 'F'].map((unit) => (
                     <button
                       key={unit}
+                      role="radio"
+                      aria-checked={settings.tempUnit === unit}
                       onClick={() => updateSetting('tempUnit', unit)}
                       className={`px-4 py-2 rounded-lg transition ${
                         settings.tempUnit === unit
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-primary text-primary-foreground'
                           : 'bg-secondary text-foreground hover:bg-secondary/80'
                       }`}
                     >
                       °{unit}
                     </button>
                   ))}
-                </div>
+                </RadioGroup>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-foreground block mb-2">{t('settings.windSpeed')}</label>
+                <label className="text-sm font-medium text-foreground block mb-2" htmlFor="settings-wind-unit">{t('settings.windSpeed')}</label>
                 <select
+                  id="settings-wind-unit"
                   value={settings.windUnit}
                   onChange={(e) => updateSetting('windUnit', e.target.value)}
-                  className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="kmh">{t('settings.windKmh')}</option>
                   <option value="mph">{t('settings.windMph')}</option>
@@ -124,11 +134,12 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-foreground block mb-2">{t('settings.pressure')}</label>
+                <label className="text-sm font-medium text-foreground block mb-2" htmlFor="settings-pressure-unit">{t('settings.pressure')}</label>
                 <select
+                  id="settings-pressure-unit"
                   value={settings.pressureUnit}
                   onChange={(e) => updateSetting('pressureUnit', e.target.value)}
-                  className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="hPa">{t('settings.pressureHpa')}</option>
                   <option value="mmHg">{t('settings.pressureMmhg')}</option>
@@ -136,11 +147,12 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-foreground block mb-2">{t('settings.visibility')}</label>
+                <label className="text-sm font-medium text-foreground block mb-2" htmlFor="settings-visibility-unit">{t('settings.visibility')}</label>
                 <select
+                  id="settings-visibility-unit"
                   value={settings.visibilityUnit}
                   onChange={(e) => updateSetting('visibilityUnit', e.target.value)}
-                  className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="km">{t('settings.visibilityKm')}</option>
                   <option value="miles">{t('settings.visibilityMiles')}</option>
@@ -159,9 +171,10 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <select
+                aria-label={t('settings.language')}
                 value={settings.language}
                 onChange={(e) => updateSetting('language', e.target.value)}
-                className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="english">{t('settings.langEnglish')}</option>
                 <option value="somali">{t('settings.langSomali')}</option>
@@ -186,17 +199,19 @@ export default function SettingsPage() {
                 <Toggle
                   enabled={settings.gpsEnabled}
                   onChange={() => toggleSetting('gpsEnabled')}
+                  label={t('settings.gpsEnabled')}
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium text-foreground block mb-2">{t('settings.defaultCity')}</label>
+                <label className="text-sm font-medium text-foreground block mb-2" htmlFor="settings-default-city">{t('settings.defaultCity')}</label>
                 <select
+                  id="settings-default-city"
                   value={settings.defaultCity}
                   onChange={(e) => updateSetting('defaultCity', e.target.value)}
-                  className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  {cities.map(city => (
+                  {CITIES.map(city => (
                     <option key={city} value={city}>{city}</option>
                   ))}
                 </select>
@@ -227,6 +242,7 @@ export default function SettingsPage() {
                   <Toggle
                     enabled={settings[key]}
                     onChange={() => toggleSetting(key)}
+                    label={t(labelKey)}
                   />
                 </div>
               ))}
@@ -250,16 +266,18 @@ export default function SettingsPage() {
                 <Toggle
                   enabled={settings.autoRefresh}
                   onChange={() => toggleSetting('autoRefresh')}
+                  label={t('settings.autoRefresh')}
                 />
               </div>
 
               {settings.autoRefresh && (
                 <div>
-                  <label className="text-sm font-medium text-foreground block mb-2">{t('settings.refreshInterval')}</label>
+                  <label className="text-sm font-medium text-foreground block mb-2" htmlFor="settings-refresh-interval">{t('settings.refreshInterval')}</label>
                   <select
+                    id="settings-refresh-interval"
                     value={settings.refreshInterval}
                     onChange={(e) => updateSetting('refreshInterval', parseInt(e.target.value))}
-                    className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="5">{t('settings.interval5')}</option>
                     <option value="10">{t('settings.interval10')}</option>
@@ -280,7 +298,7 @@ export default function SettingsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="p-4 bg-secondary/50 border border-blue-500/20 rounded-lg">
+              <div className="p-4 bg-secondary/50 border border-primary/20 rounded-lg">
                 <p className="text-sm text-foreground">{t('settings.privacyNote')}</p>
               </div>
 

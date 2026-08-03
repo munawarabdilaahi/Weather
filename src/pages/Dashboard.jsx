@@ -3,12 +3,18 @@ import { HeroCard } from '@/components/HeroCard';
 import { HourlyForecast } from '@/components/HourlyForecast';
 import { WeeklyForecast } from '@/components/WeeklyForecast';
 import { Card } from '@/components/Card';
+import { Spinner } from '@/components/Spinner';
+import { RadioGroup } from '@/components/RadioGroup';
 import { useApp } from '@/hooks/useApp';
+import { useSettings } from '@/hooks/useSettings';
 import { useWeather } from '@/hooks/useWeather';
 import { useTranslation } from '@/hooks/useTranslation';
+import { CITIES } from '@/constants/cities';
+import { convertWindSpeed, windLabelFor, convertVisibility, visibilityLabelFor, convertPressure, pressureLabelFor } from '@/utils/units';
 
 export default function Dashboard() {
-  const { selectedCity, setSelectedCity, settings, updateSetting, cities } = useApp();
+  const { selectedCity, setSelectedCity } = useApp();
+  const { settings, updateSetting } = useSettings();
   const { t } = useTranslation();
   const unit = settings.tempUnit;
   const { data: currentData, loading, error, isMock } = useWeather(selectedCity, {
@@ -16,23 +22,13 @@ export default function Dashboard() {
     refreshInterval: settings.refreshInterval,
   });
 
-  const windLabel = { kmh: 'km/h', mph: 'mph', ms: 'm/s' }[settings.windUnit] || 'km/h'
-  const visibilityLabel = settings.visibilityUnit === 'miles' ? 'mi' : 'km'
-  const pressureLabel = settings.pressureUnit === 'mmHg' ? 'mmHg' : 'mb'
+  const windLabel = windLabelFor(settings.windUnit)
+  const visibilityLabel = visibilityLabelFor(settings.visibilityUnit)
+  const pressureLabel = pressureLabelFor(settings.pressureUnit)
 
-  const windSpeed = settings.windUnit === 'ms'
-    ? Math.round((currentData?.current?.windSpeed ?? 0) / 3.6)
-    : settings.windUnit === 'mph'
-      ? Math.round((currentData?.current?.windSpeed ?? 0) / 1.609)
-      : currentData?.current?.windSpeed
-
-  const visibility = settings.visibilityUnit === 'miles'
-    ? ((currentData?.current?.visibility ?? 0) / 1.609).toFixed(1)
-    : currentData?.current?.visibility
-
-  const pressure = settings.pressureUnit === 'mmHg'
-    ? Math.round((currentData?.current?.pressure ?? 0) * 0.75006)
-    : currentData?.current?.pressure
+  const windSpeed = convertWindSpeed(currentData?.current?.windSpeed, settings.windUnit)
+  const visibility = convertVisibility(currentData?.current?.visibility, settings.visibilityUnit)
+  const pressure = convertPressure(currentData?.current?.pressure, settings.pressureUnit)
 
   return (
     <div className="p-4 lg:p-8 space-y-6">
@@ -46,40 +42,40 @@ export default function Dashboard() {
           <select
             value={selectedCity}
             onChange={(e) => setSelectedCity(e.target.value)}
-            className="px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label={t('dashboard.selectCity')}
+            className="px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            {cities.map((city) => (
+            {CITIES.map((city) => (
               <option key={city} value={city}>{city}</option>
             ))}
           </select>
 
-          <div className="flex items-center bg-secondary rounded-lg p-0.5" role="group" aria-label={t('dashboard.tempUnitAria')}>
+          <RadioGroup label={t('dashboard.tempUnitAria')} className="flex items-center bg-secondary rounded-lg p-0.5">
             <button
+              role="radio"
+              aria-checked={unit === 'C'}
               onClick={() => updateSetting('tempUnit', 'C')}
-              aria-pressed={unit === 'C'}
               className={`px-4 py-2 rounded transition text-sm font-medium ${
-                unit === 'C' ? 'bg-blue-500 text-white' : 'text-muted-foreground hover:text-foreground'
+                unit === 'C' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
             >°C</button>
             <button
+              role="radio"
+              aria-checked={unit === 'F'}
               onClick={() => updateSetting('tempUnit', 'F')}
-              aria-pressed={unit === 'F'}
               className={`px-4 py-2 rounded transition text-sm font-medium ${
-                unit === 'F' ? 'bg-blue-500 text-white' : 'text-muted-foreground hover:text-foreground'
+                unit === 'F' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
             >°F</button>
-          </div>
+          </RadioGroup>
         </div>
       </div>
 
       {loading && (
-        <div className="flex items-center justify-center h-64">
+        <div className="flex items-center justify-center h-64" role="status">
           <div className="text-center">
-            <div className="animate-spin mb-4">
-              <svg className="w-10 h-10 text-blue-500 mx-auto" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
+            <div className="mb-4">
+              <Spinner className="w-10 h-10 text-primary mx-auto" />
             </div>
             <p className="text-muted-foreground">{t('dashboard.loading')}</p>
           </div>
@@ -87,7 +83,7 @@ export default function Dashboard() {
       )}
 
       {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-6 text-center">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-6 text-center" role="alert">
           <p className="text-destructive font-medium">{t('weather.error')} {selectedCity}</p>
         </div>
       )}
