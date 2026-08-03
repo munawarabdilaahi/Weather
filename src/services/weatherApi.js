@@ -1,8 +1,32 @@
 const API_KEY = import.meta.env.VITE_OWM_API_KEY || ''
 const BASE_URL = 'https://api.openweathermap.org/data/2.5'
 
-export async function fetchCurrentWeather(city) {
-  if (!API_KEY) return null
+const CACHE_TTL = 60_000
+const cache = new Map()
+const inflight = new Map()
+
+function cachedFetch(key, factory) {
+  const cached = cache.get(key)
+  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
+    return Promise.resolve(cached.value)
+  }
+  if (inflight.has(key)) return inflight.get(key)
+  const promise = factory().then((value) => {
+    if (value) cache.set(key, { value, fetchedAt: Date.now() })
+    return value
+  }).finally(() => {
+    inflight.delete(key)
+  })
+  inflight.set(key, promise)
+  return promise
+}
+
+export function fetchCurrentWeather(city) {
+  if (!API_KEY) return Promise.resolve(null)
+  return cachedFetch(`current:${city}`, () => fetchCurrentWeatherOnce(city))
+}
+
+async function fetchCurrentWeatherOnce(city) {
   try {
     const res = await fetch(
       `${BASE_URL}/weather?q=${encodeURIComponent(city)}&units=metric&appid=${API_KEY}`
@@ -27,8 +51,12 @@ export async function fetchCurrentWeather(city) {
   }
 }
 
-export async function fetchHourlyForecast(city) {
-  if (!API_KEY) return null
+export function fetchHourlyForecast(city) {
+  if (!API_KEY) return Promise.resolve(null)
+  return cachedFetch(`forecast:${city}`, () => fetchHourlyForecastOnce(city))
+}
+
+async function fetchHourlyForecastOnce(city) {
   try {
     const res = await fetch(
       `${BASE_URL}/forecast?q=${encodeURIComponent(city)}&units=metric&cnt=8&appid=${API_KEY}`
