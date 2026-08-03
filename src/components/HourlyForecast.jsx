@@ -3,10 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from './Card';
 import { WeatherIcon } from './WeatherIcon';
 import { useTranslation } from '@/hooks/useTranslation';
-
-function convertTemp(celsius, unit) {
-  return unit === 'F' ? Math.round(celsius * 9 / 5 + 32) : celsius
-}
+import { convertTemp } from '@/utils/units';
 
 const HourlyForecast = memo(function HourlyForecast({ data, unit }) {
   const { t } = useTranslation();
