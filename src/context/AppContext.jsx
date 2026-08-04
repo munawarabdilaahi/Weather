@@ -10,6 +10,8 @@ const ACCENT_PALETTE = {
   orange: { primary: '#ea580c', accent: '#f97316' },
 }
 
+const DEFAULT_CITY = 'Mogadishu'
+
 const DEFAULT_SETTINGS = {
   appearance: 'dark',
   accentColor: 'blue',
@@ -19,11 +21,8 @@ const DEFAULT_SETTINGS = {
   visibilityUnit: 'km',
   language: 'english',
   gpsEnabled: true,
-  defaultCity: 'Mogadishu',
-  severityAlerts: true,
-  rainAlerts: true,
-  dailyForecast: true,
-  weeklyForecast: false,
+  defaultCity: DEFAULT_CITY,
+  notificationsEnabled: false,
   autoRefresh: true,
   refreshInterval: 10,
 }
@@ -43,16 +42,6 @@ export function AppProvider({ children }) {
     } catch {}
   }, [sidebarCollapsed])
 
-  const [selectedCity, setSelectedCity] = useState(() => {
-    try {
-      const saved = localStorage.getItem('weather-settings')
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        return parsed.defaultCity || 'Mogadishu'
-      }
-    } catch { /* noop */ }
-    return 'Mogadishu'
-  })
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('weather-settings')
@@ -61,13 +50,12 @@ export function AppProvider({ children }) {
       return DEFAULT_SETTINGS
     }
   })
+  const [selectedCity, setSelectedCity] = useState(() => settings.defaultCity || DEFAULT_CITY)
 
   useEffect(() => {
     try {
       localStorage.setItem('weather-settings', JSON.stringify(settings))
-    } catch {
-      /* noop */
-    }
+    } catch {}
   }, [settings])
 
   useEffect(() => {
@@ -111,6 +99,7 @@ export function AppProvider({ children }) {
 
   const updateSetting = useCallback((key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }))
+    if (key === 'defaultCity') setSelectedCity(value)
   }, [])
 
   const toggleSetting = useCallback((key) => {
@@ -119,6 +108,7 @@ export function AppProvider({ children }) {
 
   const resetSettings = useCallback(() => {
     setSettings(DEFAULT_SETTINGS)
+    setSelectedCity(DEFAULT_CITY)
   }, [])
 
   const appValue = useMemo(() => ({
