@@ -10,8 +10,8 @@ export function Toggle({ enabled, onChange, disabled = false, label }) {
       aria-label={ariaLabel}
       onClick={() => !disabled && onChange(!enabled)}
       disabled={disabled}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        enabled ? 'bg-primary' : 'bg-secondary'
+      className={`relative inline-flex h-6 w-11 items-center rounded-full border transition-colors ${
+        enabled ? 'bg-primary border-transparent' : 'bg-secondary border-border'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
       <span
