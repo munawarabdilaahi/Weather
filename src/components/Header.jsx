@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, X, Search, PanelLeft, PanelLeftClose } from 'lucide-react';
 import { useApp } from '@/hooks/useApp';
@@ -12,6 +12,18 @@ export function Header({ onMobileMenuClick, isMobileOpen }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [activeIndex, setActiveIndex] = useState(-1);
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    function handlePointerDown(e) {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, [searchOpen]);
 
   const filteredCities = useMemo(
     () => CITIES.filter((city) =>
@@ -68,7 +80,7 @@ export function Header({ onMobileMenuClick, isMobileOpen }) {
             aria-label={isMobileOpen ? t('header.closeMenu') : t('header.openMenu')}
             aria-expanded={isMobileOpen}
             aria-controls="mobile-nav-drawer"
-            className="lg:hidden p-2 hover:bg-secondary rounded-lg transition"
+            className="lg:hidden p-2 hover:bg-secondary rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {isMobileOpen ? <X size={24} className="text-foreground" /> : <Menu size={24} className="text-foreground" />}
           </button>
@@ -76,7 +88,7 @@ export function Header({ onMobileMenuClick, isMobileOpen }) {
           <button
             onClick={() => setSidebarCollapsed((prev) => !prev)}
             aria-label={sidebarCollapsed ? t('header.expandSidebar') : t('header.collapseSidebar')}
-            className="hidden lg:flex p-2 hover:bg-secondary rounded-lg transition"
+            className="hidden lg:flex p-2 hover:bg-secondary rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {sidebarCollapsed
               ? <PanelLeft size={20} className="text-foreground" />
@@ -86,7 +98,7 @@ export function Header({ onMobileMenuClick, isMobileOpen }) {
         </div>
 
         <div className="flex-1 mx-4">
-          <div className="relative">
+          <div className="relative" ref={searchRef}>
             <input
               type="text"
               role="combobox"
