@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Gauge, Sunrise, Sunset, Compass, Activity, CloudRain } from 'lucide-react';
+import { Gauge, Sunrise, Sunset, Compass, Activity, CloudRain, AlertTriangle, CloudOff } from 'lucide-react';
 import { HeroCard } from '@/components/HeroCard';
 import { HourlyForecast } from '@/components/HourlyForecast';
 import { WeeklyForecast } from '@/components/WeeklyForecast';
@@ -101,18 +101,23 @@ export default function Dashboard() {
       </div>
 
       {isOffline && (
-        <div className="bg-secondary/60 border border-border rounded-lg px-4 py-2 text-center" role="status">
-          <p className="text-sm text-muted-foreground">{t('dashboard.offline')}</p>
+        <div className="bg-secondary/60 border border-border rounded-lg px-4 py-3 text-center animate-fade-up" role="status">
+          <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+            <CloudOff size={16} aria-hidden="true" />
+            {t('dashboard.offline')}
+          </p>
         </div>
       )}
 
       {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-6 text-center" role="alert">
-          <p className="text-sm font-semibold text-red-700 dark:text-red-500">{t('weather.error')} {selectedCity}</p>
+        <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-8 text-center animate-fade-up" role="alert">
+          <AlertTriangle size={40} className="mx-auto mb-3 text-red-600 dark:text-red-400" aria-hidden="true" />
+          <p className="text-base font-semibold text-red-700 dark:text-red-500">{t('weather.error')} {selectedCity}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t('dashboard.tryAgainLater')}</p>
           <button
             type="button"
             onClick={refetch}
-            className="mt-4 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="mt-5 px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition hover:opacity-90 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {t('common.retry')}
           </button>
@@ -121,10 +126,25 @@ export default function Dashboard() {
 
       {isMock && (
         <div
-          className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-2 text-center"
+          className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 text-center animate-fade-up"
           role="status"
         >
           <p className="text-sm font-medium text-amber-800 dark:text-amber-400">{t('dashboard.demoData')}</p>
+        </div>
+      )}
+
+      {!loading && !error && !currentData && (
+        <div className="bg-card border border-border rounded-2xl p-10 text-center animate-fade-up" role="status">
+          <CloudOff size={44} className="mx-auto mb-3 text-muted-foreground" aria-hidden="true" />
+          <p className="text-base font-semibold text-foreground">{t('dashboard.empty')}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t('dashboard.emptyHint')}</p>
+          <button
+            type="button"
+            onClick={refetch}
+            className="mt-5 px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition hover:opacity-90 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            {t('common.retry')}
+          </button>
         </div>
       )}
 
@@ -148,14 +168,16 @@ export default function Dashboard() {
             </div>
           )}
 
-          <HeroCard data={currentData} unit={unit} windUnit={settings.windUnit} visibilityUnit={settings.visibilityUnit} />
+          <div className="animate-fade-up">
+            <HeroCard data={currentData} unit={unit} windUnit={settings.windUnit} visibilityUnit={settings.visibilityUnit} />
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 animate-fade-up" style={{ animationDelay: '90ms' }}>
               <HourlyForecast data={currentData} unit={unit} />
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 animate-fade-up" style={{ animationDelay: '160ms' }}>
               <Card>
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase mb-4">{t('dashboard.additionalDetails')}</h3>
                 <div className="space-y-3">
@@ -174,7 +196,7 @@ export default function Dashboard() {
               </Card>
             </div>
 
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3 animate-fade-up" style={{ animationDelay: '230ms' }}>
               <WeeklyForecast data={currentData} unit={unit} />
             </div>
           </div>
