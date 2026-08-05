@@ -21,6 +21,10 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-weather-sun: var(--weather-sun);
+  --color-weather-rain: var(--weather-rain);
+  --color-weather-cloud: var(--weather-cloud);
+  --color-weather-snow: var(--weather-snow);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -70,6 +74,10 @@
   --chart-4: #f59e0b;
   --chart-5: #ef4444;
   --radius: 0.625rem;
+  --weather-sun: #fbbf24;
+  --weather-rain: #93c5fd;
+  --weather-cloud: #cbd5e1;
+  --weather-snow: #bae6fd;
   --sidebar: #131829;
   --sidebar-foreground: #e4e9f7;
   --sidebar-primary: #3b82f6;
@@ -105,6 +113,10 @@
   --chart-3: #10b981;
   --chart-4: #f59e0b;
   --chart-5: #dc2626;
+  --weather-sun: #d97706;
+  --weather-rain: #1d4ed8;
+  --weather-cloud: #475569;
+  --weather-snow: #0284c7;
   --sidebar: #ffffff;
   --sidebar-foreground: #1e293b;
   --sidebar-primary: #3b82f6;
