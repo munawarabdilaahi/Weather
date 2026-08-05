@@ -2,17 +2,15 @@ import { memo } from 'react';
 import { Cloud, Droplets, Wind, Eye, Zap } from 'lucide-react';
 import { WeatherIcon } from './WeatherIcon';
 import { useTranslation } from '@/hooks/useTranslation';
-import { convertWindSpeed, windLabelFor, convertVisibility, visibilityLabelFor } from '@/utils/units';
+import { windSpeedFor, visibilityFor } from '@/utils/units';
 
 const HeroCard = memo(function HeroCard({ data, unit, windUnit = 'kmh', visibilityUnit = 'km' }) {
   const { t } = useTranslation();
   const temp = unit === 'C' ? data.current.temp : data.current.tempF;
   const feelsLike = unit === 'C' ? data.current.feelsLike : data.current.feelsLikeF;
 
-  const windSpeed = convertWindSpeed(data.current.windSpeed, windUnit)
-  const windLabel = windLabelFor(windUnit)
-  const visibility = convertVisibility(data.current.visibility, visibilityUnit)
-  const visibilityLabel = visibilityLabelFor(visibilityUnit)
+  const wind = windSpeedFor(data.current.windSpeed, windUnit)
+  const visibility = visibilityFor(data.current.visibility, visibilityUnit)
 
   return (
     <div className="bg-gradient-to-br from-primary to-accent rounded-3xl p-8 text-white overflow-hidden relative">
@@ -52,7 +50,7 @@ const HeroCard = memo(function HeroCard({ data, unit, windUnit = 'kmh', visibili
               <Wind size={18} />
               <span className="text-sm text-white">{t('hero.wind')}</span>
             </div>
-            <p className="text-2xl font-bold">{windSpeed} {windLabel}</p>
+            <p className="text-2xl font-bold">{wind.value} {wind.label}</p>
           </div>
 
           <div className="bg-white/10 backdrop-blur rounded-xl p-4">
@@ -68,7 +66,7 @@ const HeroCard = memo(function HeroCard({ data, unit, windUnit = 'kmh', visibili
               <Eye size={18} />
               <span className="text-sm text-white">{t('hero.visibility')}</span>
             </div>
-            <p className="text-2xl font-bold">{visibility} {visibilityLabel}</p>
+            <p className="text-2xl font-bold">{visibility.value} {visibility.label}</p>
           </div>
         </div>
       </div>
