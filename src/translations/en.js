@@ -28,9 +28,13 @@ export const en = {
   'hero.uvIndex': 'UV Index',
   'hero.visibility': 'Visibility',
 
-  'hourly.title': '24-Hour Forecast',
+  'hourly.title': 'Hourly Forecast',
+  'hourly.titleCount': '{count}-Hour Forecast',
 
   'weekly.title': '7-Day Forecast',
+  'weekly.headDay': 'Day',
+  'weekly.headCondition': 'Condition',
+  'weekly.headTemp': 'High / Low',
 
   'dashboard.demoData': 'Showing demo weather data.',
   'dashboard.title': 'Dashboard',
@@ -38,11 +42,11 @@ export const en = {
   'dashboard.selectCity': 'Select city',
   'dashboard.tempUnitAria': 'Temperature unit',
   'dashboard.loading': 'Loading weather data...',
+  'dashboard.lastUpdated': 'Last updated',
+  'dashboard.offline': 'You are offline — showing the last available data.',
+  'dashboard.refreshing': 'Refreshing…',
   'dashboard.additionalDetails': 'Additional Details',
   'dashboard.pressure': 'Pressure',
-  'dashboard.visibility': 'Visibility',
-  'dashboard.humidity': 'Humidity',
-  'dashboard.windSpeed': 'Wind Speed',
 
   'maps.title': 'Weather Maps',
   'maps.subtitle': 'Explore weather conditions around the globe',
@@ -179,6 +183,7 @@ export const en = {
   'settings.shareApp': 'Share App',
   'settings.contactSupport': 'Contact Support',
   'common.cancel': 'Cancel',
+  'common.retry': 'Retry',
   'dialog.close': 'Close',
 
   'notFound.title': 'Page Not Found',
