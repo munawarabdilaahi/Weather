@@ -16,6 +16,9 @@ const HeroCard = memo(function HeroCard({ data, unit, windUnit = 'kmh', visibili
 
   return (
     <div className="bg-gradient-to-br from-primary to-accent rounded-3xl p-8 text-white overflow-hidden relative">
+      {/* Contrast overlay: keeps white text >= 4.5:1 on the primary/accent gradient */}
+      <div aria-hidden="true" className="absolute inset-0 bg-black/30" />
+
       {/* Background decoration */}
       <div className="absolute top-0 right-0 opacity-10">
         <Cloud size={300} />
