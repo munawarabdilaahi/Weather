@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Gauge } from 'lucide-react';
 import { HeroCard } from '@/components/HeroCard';
 import { HourlyForecast } from '@/components/HourlyForecast';
@@ -23,14 +24,24 @@ export default function Dashboard() {
     refreshInterval: settings.refreshInterval,
   });
 
-  const pressureLabel = pressureLabelFor(settings.pressureUnit)
-  const pressure = convertPressure(currentData?.current?.pressure, settings.pressureUnit)
-  const lastUpdatedLabel = lastUpdated
-    ? new Date(lastUpdated).toLocaleTimeString(
-        lang === 'somali' ? 'so-SO' : 'en-US',
-        { hour: '2-digit', minute: '2-digit' }
-      )
-    : null
+  const pressure = useMemo(
+    () => ({
+      label: pressureLabelFor(settings.pressureUnit),
+      value: convertPressure(currentData?.current?.pressure, settings.pressureUnit),
+    }),
+    [settings.pressureUnit, currentData?.current?.pressure]
+  );
+
+  const lastUpdatedLabel = useMemo(
+    () =>
+      lastUpdated
+        ? new Date(lastUpdated).toLocaleTimeString(
+            lang === 'somali' ? 'so-SO' : 'en-US',
+            { hour: '2-digit', minute: '2-digit' }
+          )
+        : null,
+    [lastUpdated, lang]
+  );
 
   return (
     <div className="p-4 lg:p-8 space-y-6">
@@ -141,7 +152,7 @@ export default function Dashboard() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-2 bg-secondary rounded-lg">
                     <span className="text-sm text-muted-foreground flex items-center gap-2"><Gauge size={16} /> {t('dashboard.pressure')}</span>
-                    <span className="font-bold text-foreground">{pressure} {pressureLabel}</span>
+                    <span className="font-bold text-foreground">{pressure.value} {pressure.label}</span>
                   </div>
                 </div>
               </Card>
