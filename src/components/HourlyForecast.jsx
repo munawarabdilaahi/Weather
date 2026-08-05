@@ -26,7 +26,7 @@ const HourlyForecast = memo(function HourlyForecast({ data, unit }) {
       <div className="overflow-x-auto pb-2">
         <div className="flex gap-4 px-6">
           {data.hourly.map((hour) => (
-            <div key={hour.hour} className="flex-shrink-0 flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-secondary min-w-[80px] hover:bg-secondary/80 transition">
+            <div key={hour.hour} className="flex-shrink-0 flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-secondary min-w-[80px] hover:bg-secondary/80 hover:-translate-y-1 transition-all duration-200">
               <span className="text-xs text-muted-foreground font-medium">{hour.hour}</span>
               <WeatherIcon type={hour.icon} size={24} />
               <span className="text-sm font-bold text-foreground">{convertTemp(hour.temp, unit)}°</span>
