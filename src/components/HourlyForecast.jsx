@@ -10,11 +10,16 @@ const HourlyForecast = memo(function HourlyForecast({ data, unit }) {
 
   if (!data || !data.hourly) return null
 
+  const hours = data.hourly.length
+  const title = hours > 0
+    ? t('hourly.titleCount').replace('{count}', String(hours))
+    : t('hourly.title')
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>{t('hourly.title')}</span>
+          <span>{title}</span>
           <ChevronRight size={20} className="text-muted-foreground" />
         </CardTitle>
       </CardHeader>
@@ -25,6 +30,7 @@ const HourlyForecast = memo(function HourlyForecast({ data, unit }) {
               <span className="text-xs text-muted-foreground font-medium">{hour.hour}</span>
               <WeatherIcon type={hour.icon} size={24} />
               <span className="text-sm font-bold text-foreground">{convertTemp(hour.temp, unit)}°</span>
+              <span className="sr-only">{hour.condition}</span>
             </div>
           ))}
         </div>
