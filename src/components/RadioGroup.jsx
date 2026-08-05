@@ -1,14 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useRef, Children, isValidElement, cloneElement } from 'react';
+
+function isChecked(value) {
+  return value === true || value === 'true';
+}
 
 export function RadioGroup({ label, labelledBy, id, children, className = '' }) {
   const groupRef = useRef(null);
-
-  useEffect(() => {
-    const radios = groupRef.current?.querySelectorAll('[role="radio"]');
-    radios?.forEach((el) => {
-      el.tabIndex = el.getAttribute('aria-checked') === 'true' ? 0 : -1;
-    });
-  });
 
   function handleKeyDown(e) {
     const isForward = e.key === 'ArrowDown' || e.key === 'ArrowRight';
@@ -39,6 +36,14 @@ export function RadioGroup({ label, labelledBy, id, children, className = '' }) 
     radios[next].click();
   }
 
+  const mappedChildren = Children.map(children, (child) => {
+    if (isValidElement(child)) {
+      const checked = isChecked(child.props?.['aria-checked']);
+      return cloneElement(child, { tabIndex: checked ? 0 : -1 });
+    }
+    return child;
+  });
+
   return (
     <div
       ref={groupRef}
@@ -49,7 +54,7 @@ export function RadioGroup({ label, labelledBy, id, children, className = '' }) 
       onKeyDown={handleKeyDown}
       className={className}
     >
-      {children}
+      {mappedChildren}
     </div>
   );
 }
