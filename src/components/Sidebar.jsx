@@ -42,7 +42,7 @@ function SidebarInner({ showText, onItemClick }) {
               onClick={onItemClick}
               aria-current={isActive ? 'page' : undefined}
               aria-label={t(item.key)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 ${
                 isActive
                   ? 'bg-sidebar-primary text-sidebar-primary-foreground'
                   : 'text-sidebar-foreground hover:bg-secondary'
@@ -67,7 +67,7 @@ function SidebarInner({ showText, onItemClick }) {
               key={location}
               onClick={() => handleLocationClick(location)}
               aria-label={location}
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-sidebar-foreground hover:bg-secondary rounded-lg transition"
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-sidebar-foreground hover:bg-secondary rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2"
             >
               <MapPin size={16} className="flex-shrink-0" aria-hidden="true" />
               {showText && <span>{location}</span>}
