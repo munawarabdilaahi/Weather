@@ -28,8 +28,12 @@ export const so = {
   'hero.uvIndex': 'Heerka UV',
   'hero.visibility': 'Aragtida',
 
-  'hourly.title': 'Saacadaha Soo Socda (24)',
+  'hourly.title': 'Saacadaha Soo Socda',
+  'hourly.titleCount': '{count}-Saacadood Soo Socda',
   'weekly.title': 'Toddobaadka Soo Socda (7)',
+  'weekly.headDay': 'Maalin',
+  'weekly.headCondition': 'Xaaladda',
+  'weekly.headTemp': 'Sare / Hoos',
 
   'dashboard.demoData': 'Tusaya xog cimilo oo tijaabo ah.',
   'dashboard.title': 'Dashboard-ka',
@@ -37,11 +41,11 @@ export const so = {
   'dashboard.selectCity': 'Dooro magaalo',
   'dashboard.tempUnitAria': 'Heerka kuleylka',
   'dashboard.loading': 'Cimilada waa la soo dajinayaa...',
+  'dashboard.lastUpdated': 'Markii ugu dambaysay',
+  'dashboard.offline': 'Waxaad ka baxday xiriirka — waxaa lagu tusayaa xogta markii ugu dambaysay ee la hayo.',
+  'dashboard.refreshing': 'Waa la cusboonaysiinayaa…',
   'dashboard.additionalDetails': 'Faahfaahin Dheeraad ah',
   'dashboard.pressure': 'Cadaadiska',
-  'dashboard.visibility': 'Aragtida',
-  'dashboard.humidity': 'Qoyaanka',
-  'dashboard.windSpeed': 'Xawaaraha Dabaysha',
 
   'maps.title': 'Khariidadaha Cimilada',
   'maps.subtitle': 'Baadh xaaladaha cimilada adduunka oo dhan',
@@ -178,6 +182,7 @@ export const so = {
   'settings.shareApp': 'La Wadaag App-ka',
   'settings.contactSupport': 'La Xiriir Taageerada',
   'common.cancel': 'Jooji',
+  'common.retry': 'Dib u day',
   'dialog.close': 'Xir',
 
   'notFound.title': 'Bogga Lama Helin',
