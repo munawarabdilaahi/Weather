@@ -3,6 +3,7 @@ import { Cloud, Droplets, Wind, Eye, Zap } from 'lucide-react';
 import { WeatherIcon } from './WeatherIcon';
 import { useTranslation } from '@/hooks/useTranslation';
 import { windSpeedFor, visibilityFor } from '@/utils/units';
+import { weatherConditionKey } from '@/utils/weatherConditions';
 
 const HeroCard = memo(function HeroCard({ data, unit, windUnit = 'kmh', visibilityUnit = 'km' }) {
   const { t } = useTranslation();
@@ -18,7 +19,7 @@ const HeroCard = memo(function HeroCard({ data, unit, windUnit = 'kmh', visibili
       <div aria-hidden="true" className="absolute inset-0 bg-black/30" />
 
       {/* Background decoration */}
-      <div className="absolute top-0 right-0 opacity-10">
+      <div aria-hidden="true" className="absolute top-0 right-0 opacity-10">
         <Cloud size={300} />
       </div>
 
@@ -32,7 +33,7 @@ const HeroCard = memo(function HeroCard({ data, unit, windUnit = 'kmh', visibili
               {t('hero.currentWeather')}
             </span>
             <h2 className="text-5xl md:text-6xl font-bold tracking-tight">{temp}°</h2>
-            <p className="text-white/90 mt-2">{data.current.condition}</p>
+            <p className="text-white/90 mt-2">{t(weatherConditionKey(data.current.condition))}</p>
           </div>
           <div className="text-right flex sm:flex-col items-center sm:items-end gap-3 sm:gap-2">
             <WeatherIcon type={data.current.icon} size={80} />
@@ -42,7 +43,7 @@ const HeroCard = memo(function HeroCard({ data, unit, windUnit = 'kmh', visibili
 
         {/* Weather details grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          <div className="bg-white/10 backdrop-blur rounded-xl p-4 transition hover:bg-white/15 hover:-translate-y-0.5">
+          <div className="bg-white/10 backdrop-blur rounded-xl p-4 transition hover:bg-white/15">
             <div className="flex items-center gap-2 mb-2">
               <Droplets size={18} aria-hidden="true" />
               <span className="text-sm text-white">{t('hero.humidity')}</span>
@@ -50,7 +51,7 @@ const HeroCard = memo(function HeroCard({ data, unit, windUnit = 'kmh', visibili
             <p className="text-2xl font-bold">{data.current.humidity}%</p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur rounded-xl p-4 transition hover:bg-white/15 hover:-translate-y-0.5">
+          <div className="bg-white/10 backdrop-blur rounded-xl p-4 transition hover:bg-white/15">
             <div className="flex items-center gap-2 mb-2">
               <Wind size={18} aria-hidden="true" />
               <span className="text-sm text-white">{t('hero.wind')}</span>
@@ -58,15 +59,15 @@ const HeroCard = memo(function HeroCard({ data, unit, windUnit = 'kmh', visibili
             <p className="text-2xl font-bold">{wind.value} {wind.label}</p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur rounded-xl p-4 transition hover:bg-white/15 hover:-translate-y-0.5">
+          <div className="bg-white/10 backdrop-blur rounded-xl p-4 transition hover:bg-white/15">
             <div className="flex items-center gap-2 mb-2">
               <Zap size={18} aria-hidden="true" />
               <span className="text-sm text-white">{t('hero.uvIndex')}</span>
             </div>
-            <p className="text-2xl font-bold">{data.current.uv}</p>
+            <p className="text-2xl font-bold">{data.current.uv > 0 ? data.current.uv : '—'}</p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur rounded-xl p-4 transition hover:bg-white/15 hover:-translate-y-0.5">
+          <div className="bg-white/10 backdrop-blur rounded-xl p-4 transition hover:bg-white/15">
             <div className="flex items-center gap-2 mb-2">
               <Eye size={18} aria-hidden="true" />
               <span className="text-sm text-white">{t('hero.visibility')}</span>

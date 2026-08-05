@@ -1,6 +1,24 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { fetchCurrentWeather, fetchHourlyForecast, MOCK_WEATHER_DATA } from '../services/weatherApi'
+import {
+  fetchCurrentWeather,
+  fetchHourlyForecast,
+  saveLastRealWeather,
+  getLastRealWeather,
+  MOCK_WEATHER_DATA,
+} from '../services/weatherApi'
 import { generateWeeklyFromCurrent } from '../utils/forecast'
+
+function buildPayload(current, hourly) {
+  return {
+    current,
+    hourly,
+    weekly: generateWeeklyFromCurrent(current),
+  }
+}
+
+function buildFromCached(cached) {
+  return buildPayload(cached.current, cached.hourly)
+}
 
 export function useWeather(city, { autoRefresh, refreshInterval } = {}) {
   const [data, setData] = useState(null)
@@ -16,10 +34,7 @@ export function useWeather(city, { autoRefresh, refreshInterval } = {}) {
 
   useEffect(() => {
     const handleOffline = () => setIsOffline(true)
-    const handleOnline = () => {
-      setIsOffline(false)
-      loadRef.current?.()
-    }
+    const handleOnline = () => setIsOffline(false)
 
     window.addEventListener('offline', handleOffline)
     window.addEventListener('online', handleOnline)
@@ -37,6 +52,29 @@ export function useWeather(city, { autoRefresh, refreshInterval } = {}) {
       setLoading(true)
       setError(null)
 
+      // Offline: never hit the network. Prefer the last successful real
+      // payload; fall back to mock ONLY when no real data was ever persisted.
+      if (isOffline) {
+        const cached = getLastRealWeather(city)
+        if (cached) {
+          setData(buildFromCached(cached))
+          setIsMock(false)
+          setLastUpdated(new Date(cached.storedAt))
+        } else {
+          const mock = MOCK_WEATHER_DATA[city]
+          if (mock) {
+            setData(mock)
+            setIsMock(true)
+            setLastUpdated(new Date())
+          } else {
+            setError(`No weather data available for ${city}`)
+            setIsMock(false)
+          }
+        }
+        setLoading(false)
+        return
+      }
+
       const [current, hourly] = await Promise.all([
         fetchCurrentWeather(city),
         fetchHourlyForecast(city),
@@ -45,22 +83,28 @@ export function useWeather(city, { autoRefresh, refreshInterval } = {}) {
       if (cancelled) return
 
       if (current && hourly) {
-        setData({
-          current,
-          hourly,
-          weekly: generateWeeklyFromCurrent(current),
-        })
+        setData(buildPayload(current, hourly))
         setIsMock(false)
         setLastUpdated(new Date())
+        saveLastRealWeather(city, current, hourly)
       } else {
-        const mock = MOCK_WEATHER_DATA[city]
-        if (mock) {
-          setData(mock)
-          setIsMock(true)
-          setLastUpdated(new Date())
-        } else {
-          setError(`No weather data available for ${city}`)
+        // Fetch failed while online. Never replace real data with mock;
+        // fall back to the last real snapshot if we have one.
+        const cached = getLastRealWeather(city)
+        if (cached) {
+          setData(buildFromCached(cached))
           setIsMock(false)
+          setLastUpdated(new Date(cached.storedAt))
+        } else {
+          const mock = MOCK_WEATHER_DATA[city]
+          if (mock) {
+            setData(mock)
+            setIsMock(true)
+            setLastUpdated(new Date())
+          } else {
+            setError(`No weather data available for ${city}`)
+            setIsMock(false)
+          }
         }
       }
       setLoading(false)
@@ -68,16 +112,22 @@ export function useWeather(city, { autoRefresh, refreshInterval } = {}) {
 
     load()
 
-    if (autoRefresh && refreshInterval > 0) {
+    // Auto-refresh is intentionally NOT started while offline. Toggling
+    // back online changes `isOffline`, re-running this effect, which
+    // re-fetches and restarts the interval automatically.
+    if (!isOffline && autoRefresh && refreshInterval > 0) {
       intervalRef.current = setInterval(load, refreshInterval * 60 * 1000)
     }
 
     return () => {
       cancelled = true
-      if (intervalRef.current) clearInterval(intervalRef.current)
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
       loadRef.current = null
     }
-  }, [city, autoRefresh, refreshInterval])
+  }, [city, autoRefresh, refreshInterval, isOffline])
 
   const refetch = useCallback(() => {
     loadRef.current?.()

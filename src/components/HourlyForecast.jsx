@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle } from './Card';
 import { WeatherIcon } from './WeatherIcon';
 import { useTranslation } from '@/hooks/useTranslation';
 import { convertTemp } from '@/utils/units';
+import { weatherConditionKey } from '@/utils/weatherConditions';
 
 const HourlyForecast = memo(function HourlyForecast({ data, unit }) {
   const { t } = useTranslation();
@@ -24,13 +25,13 @@ const HourlyForecast = memo(function HourlyForecast({ data, unit }) {
         </CardTitle>
       </CardHeader>
       <div className="overflow-x-auto pb-2">
-        <div className="flex gap-4 px-6">
+        <div className="flex gap-4">
           {data.hourly.map((hour) => (
-            <div key={hour.hour} className="flex-shrink-0 flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-secondary min-w-[80px] hover:bg-secondary/80 hover:-translate-y-1 transition-all duration-200">
+            <div key={hour.hour} className="flex-shrink-0 flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-secondary min-w-[80px] hover:bg-secondary/80 transition-colors duration-200">
               <span className="text-xs text-muted-foreground font-medium">{hour.hour}</span>
               <WeatherIcon type={hour.icon} size={24} />
               <span className="text-sm font-bold text-foreground">{convertTemp(hour.temp, unit)}°</span>
-              <span className="sr-only">{hour.condition}</span>
+              <span className="sr-only">{t(weatherConditionKey(hour.condition))}</span>
             </div>
           ))}
         </div>

@@ -15,6 +15,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { CITIES } from '@/constants/cities';
 import { convertPressure, pressureLabelFor } from '@/utils/units';
 import { deriveWeatherDetails, aqiLevel, formatMinutesAsTime } from '@/utils/weatherDetails';
+import { localeFor } from '@/utils/locale';
 
 export default function Dashboard() {
   const { selectedCity, setSelectedCity } = useApp();
@@ -31,14 +32,14 @@ export default function Dashboard() {
       label: pressureLabelFor(settings.pressureUnit),
       value: convertPressure(currentData?.current?.pressure, settings.pressureUnit),
     }),
-    [settings.pressureUnit, currentData?.current?.pressure]
+    [settings.pressureUnit, currentData]
   );
 
   const lastUpdatedLabel = useMemo(
     () =>
       lastUpdated
         ? new Date(lastUpdated).toLocaleTimeString(
-            lang === 'somali' ? 'so-SO' : 'en-US',
+            localeFor(lang),
             { hour: '2-digit', minute: '2-digit' }
           )
         : null,
@@ -47,10 +48,12 @@ export default function Dashboard() {
 
   const weatherDetails = useMemo(
     () => (currentData?.current ? deriveWeatherDetails(currentData.current) : null),
-    [currentData?.current]
+    [currentData]
   );
 
-  const locale = lang === 'somali' ? 'so-SO' : 'en-US';
+  const aqiInfo = weatherDetails ? aqiLevel(weatherDetails.aqi) : null;
+
+  const locale = localeFor(lang);
 
   return (
     <div className="p-4 lg:p-8 space-y-6">
@@ -70,7 +73,7 @@ export default function Dashboard() {
             value={selectedCity}
             onChange={(e) => setSelectedCity(e.target.value)}
             aria-label={t('dashboard.selectCity')}
-            className="px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-4 py-2 bg-secondary border border-border rounded-lg text-foreground"
           >
             {CITIES.map((city) => (
               <option key={city} value={city}>{city}</option>
@@ -83,7 +86,7 @@ export default function Dashboard() {
               role="radio"
               aria-checked={unit === 'C'}
               onClick={() => updateSetting('tempUnit', 'C')}
-              className={`px-4 py-2 rounded transition text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+              className={`px-4 py-2 rounded transition text-sm font-medium ${
                 unit === 'C' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
             >°C</button>
@@ -92,7 +95,7 @@ export default function Dashboard() {
               role="radio"
               aria-checked={unit === 'F'}
               onClick={() => updateSetting('tempUnit', 'F')}
-              className={`px-4 py-2 rounded transition text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+              className={`px-4 py-2 rounded transition text-sm font-medium ${
                 unit === 'F' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
             >°F</button>
@@ -117,7 +120,7 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={refetch}
-            className="mt-5 px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition hover:opacity-90 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="mt-5 px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition hover:opacity-90 hover:-translate-y-0.5"
           >
             {t('common.retry')}
           </button>
@@ -141,7 +144,7 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={refetch}
-            className="mt-5 px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition hover:opacity-90 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="mt-5 px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition hover:opacity-90 hover:-translate-y-0.5"
           >
             {t('common.retry')}
           </button>
@@ -188,8 +191,8 @@ export default function Dashboard() {
                   <DetailRow
                     icon={Activity}
                     label={t('dashboard.airQuality')}
-                    value={`${weatherDetails.aqi} · ${t(aqiLevel(weatherDetails.aqi).key)}`}
-                    valueClassName={aqiLevel(weatherDetails.aqi).className}
+                    value={`${weatherDetails.aqi} · ${t(aqiInfo.key)}`}
+                    valueClassName={aqiInfo.className}
                   />
                   <DetailRow icon={CloudRain} label={t('dashboard.rainProbability')} value={`${weatherDetails.rainProbability}%`} />
                 </div>

@@ -1,9 +1,40 @@
+import { convertTemp } from '../utils/units'
+
 const API_KEY = import.meta.env.VITE_OWM_API_KEY || ''
 const BASE_URL = 'https://api.openweathermap.org/data/2.5'
 
 const CACHE_TTL = 60_000
 const cache = new Map()
 const inflight = new Map()
+
+const LAST_REAL_PREFIX = 'weather.lastReal:'
+
+function lastRealKey(city) {
+  return LAST_REAL_PREFIX + city
+}
+
+export function saveLastRealWeather(city, current, hourly) {
+  try {
+    localStorage.setItem(
+      lastRealKey(city),
+      JSON.stringify({ current, hourly, storedAt: Date.now() })
+    )
+  } catch {
+    // Ignore storage failures (private mode, quota, etc.)
+  }
+}
+
+export function getLastRealWeather(city) {
+  try {
+    const raw = localStorage.getItem(lastRealKey(city))
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed || !parsed.current) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
 
 function cachedFetch(key, factory) {
   const cached = cache.get(key)
@@ -35,7 +66,7 @@ async function fetchCurrentWeatherOnce(city) {
     const data = await res.json()
     return {
       temp: Math.round(data.main.temp),
-      tempF: Math.round(data.main.temp * 9 / 5 + 32),
+      tempF: convertTemp(data.main.temp, 'F'),
       condition: data.weather[0].main,
       icon: mapOpenWeatherIcon(data.weather[0].icon),
       humidity: data.main.humidity,
@@ -44,7 +75,7 @@ async function fetchCurrentWeatherOnce(city) {
       visibility: Math.round(data.visibility / 1000),
       pressure: data.main.pressure,
       feelsLike: Math.round(data.main.feels_like),
-      feelsLikeF: Math.round(data.main.feels_like * 9 / 5 + 32),
+      feelsLikeF: convertTemp(data.main.feels_like, 'F'),
     }
   } catch {
     return null
@@ -85,8 +116,8 @@ function mapOpenWeatherIcon(iconCode) {
 
 function createMockData(baseTemp, condition, icon, humidity, windSpeed, uv, visibility, pressure) {
   const feelsLike = baseTemp + 3
-  const tempF = Math.round(baseTemp * 9 / 5 + 32)
-  const feelsLikeF = Math.round(feelsLike * 9 / 5 + 32)
+  const tempF = convertTemp(baseTemp, 'F')
+  const feelsLikeF = convertTemp(feelsLike, 'F')
 
   const hourly = Array.from({ length: 24 }, (_, i) => {
     const hourTemp = Math.round(baseTemp + Math.sin((i - 6) * Math.PI / 12) * 5)

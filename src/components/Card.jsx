@@ -1,7 +1,7 @@
-export function Card({ children, className = '', ...props }) {
+export function Card({ children, className = '', hover = false, ...props }) {
   return (
     <div
-      className={`bg-card rounded-2xl p-6 border border-border card-lift shadow-[0_8px_30px_-16px_rgba(0,0,0,0.35)] ${className}`}
+      className={`bg-card rounded-2xl p-6 border border-border shadow-[0_8px_30px_-16px_rgba(0,0,0,0.35)] ${hover ? 'card-lift' : ''} ${className}`}
       {...props}
     >
       {children}
