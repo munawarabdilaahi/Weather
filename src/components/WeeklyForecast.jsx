@@ -28,6 +28,13 @@ const WeeklyForecast = memo(function WeeklyForecast({ data, unit }) {
       </CardHeader>
       <div className="overflow-x-auto pb-2">
         <table className="w-full text-sm">
+          <thead className="sr-only">
+            <tr>
+              <th scope="col">{t('weekly.headDay')}</th>
+              <th scope="col">{t('weekly.headCondition')}</th>
+              <th scope="col">{t('weekly.headTemp')}</th>
+            </tr>
+          </thead>
           <tbody className="px-6">
             {data.weekly.map((day) => (
               <tr key={day.day} className="border-b border-border last:border-b-0 hover:bg-secondary/30 transition">
