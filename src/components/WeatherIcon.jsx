@@ -7,17 +7,18 @@ import {
 } from 'lucide-react';
 
 const WeatherIcon = memo(function WeatherIcon({ type, size = 24 }) {
+  const base = 'transition-transform duration-300 hover:scale-110 drop-shadow-sm';
   switch (type) {
     case 'sun':
-      return <Sun size={size} className="text-weather-sun" aria-hidden="true" />;
+      return <Sun size={size} className={`text-weather-sun ${base}`} aria-hidden="true" />;
     case 'rain':
-      return <CloudRain size={size} className="text-weather-rain" aria-hidden="true" />;
+      return <CloudRain size={size} className={`text-weather-rain ${base}`} aria-hidden="true" />;
     case 'cloud':
-      return <Cloud size={size} className="text-weather-cloud" aria-hidden="true" />;
+      return <Cloud size={size} className={`text-weather-cloud ${base}`} aria-hidden="true" />;
     case 'snow':
-      return <CloudSnow size={size} className="text-weather-snow" aria-hidden="true" />;
+      return <CloudSnow size={size} className={`text-weather-snow ${base}`} aria-hidden="true" />;
     default:
-      return <Sun size={size} className="text-weather-sun" aria-hidden="true" />;
+      return <Sun size={size} className={`text-weather-sun ${base}`} aria-hidden="true" />;
   }
 });
 
