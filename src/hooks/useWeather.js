@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { fetchCurrentWeather, fetchHourlyForecast, MOCK_WEATHER_DATA } from '../services/weatherApi'
-import { CITIES_COORDS } from '@/constants/cities'
+import { generateWeeklyFromCurrent } from '../utils/forecast'
 
 export function useWeather(city, { autoRefresh, refreshInterval } = {}) {
   const [data, setData] = useState(null)
@@ -84,25 +84,6 @@ export function useWeather(city, { autoRefresh, refreshInterval } = {}) {
   }, [])
 
   return { data, loading, error, isMock, refetch, lastUpdated, isOffline }
-}
-
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-function generateWeeklyFromCurrent(current) {
-  const today = new Date().getDay()
-  const baseTemp = current.temp
-  return DAYS.map((day, i) => {
-    const offset = Math.sin(i * 1.2) * 4
-    const high = Math.round(baseTemp + offset + 2)
-    const low = Math.round(baseTemp + offset - 4)
-    return {
-      day: DAYS[(today + i) % 7],
-      high,
-      low,
-      condition: high > baseTemp + 1 ? 'Sunny' : 'Cloudy',
-      icon: high > baseTemp + 1 ? 'sun' : 'cloud',
-    }
-  })
 }
 
 
