@@ -2,15 +2,32 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { fetchCurrentWeather, fetchHourlyForecast, MOCK_WEATHER_DATA } from '../services/weatherApi'
 import { CITIES_COORDS } from '@/constants/cities'
 
-const API_KEY = import.meta.env.VITE_OWM_API_KEY || ''
-
 export function useWeather(city, { autoRefresh, refreshInterval } = {}) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [isMock, setIsMock] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState(null)
+  const [isOffline, setIsOffline] = useState(() =>
+    typeof navigator !== 'undefined' ? !navigator.onLine : false
+  )
   const intervalRef = useRef(null)
   const loadRef = useRef(null)
+
+  useEffect(() => {
+    const handleOffline = () => setIsOffline(true)
+    const handleOnline = () => {
+      setIsOffline(false)
+      loadRef.current?.()
+    }
+
+    window.addEventListener('offline', handleOffline)
+    window.addEventListener('online', handleOnline)
+    return () => {
+      window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('online', handleOnline)
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -34,11 +51,13 @@ export function useWeather(city, { autoRefresh, refreshInterval } = {}) {
           weekly: generateWeeklyFromCurrent(current),
         })
         setIsMock(false)
+        setLastUpdated(new Date())
       } else {
         const mock = MOCK_WEATHER_DATA[city]
         if (mock) {
           setData(mock)
-          setIsMock(!API_KEY)
+          setIsMock(true)
+          setLastUpdated(new Date())
         } else {
           setError(`No weather data available for ${city}`)
           setIsMock(false)
@@ -64,7 +83,7 @@ export function useWeather(city, { autoRefresh, refreshInterval } = {}) {
     loadRef.current?.()
   }, [])
 
-  return { data, loading, error, isMock, refetch }
+  return { data, loading, error, isMock, refetch, lastUpdated, isOffline }
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
