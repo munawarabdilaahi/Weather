@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Gauge } from 'lucide-react';
+import { Gauge, Sunrise, Sunset, Compass, Activity, CloudRain } from 'lucide-react';
 import { HeroCard } from '@/components/HeroCard';
 import { HourlyForecast } from '@/components/HourlyForecast';
 import { WeeklyForecast } from '@/components/WeeklyForecast';
@@ -7,12 +7,14 @@ import { Card } from '@/components/Card';
 import { Spinner } from '@/components/Spinner';
 import { Skeleton } from '@/components/Skeleton';
 import { RadioGroup } from '@/components/RadioGroup';
+import { DetailRow } from '@/components/DetailRow';
 import { useApp } from '@/hooks/useApp';
 import { useSettings } from '@/hooks/useSettings';
 import { useWeather } from '@/hooks/useWeather';
 import { useTranslation } from '@/hooks/useTranslation';
 import { CITIES } from '@/constants/cities';
 import { convertPressure, pressureLabelFor } from '@/utils/units';
+import { deriveWeatherDetails, aqiLevel, formatMinutesAsTime } from '@/utils/weatherDetails';
 
 export default function Dashboard() {
   const { selectedCity, setSelectedCity } = useApp();
@@ -42,6 +44,13 @@ export default function Dashboard() {
         : null,
     [lastUpdated, lang]
   );
+
+  const weatherDetails = useMemo(
+    () => (currentData?.current ? deriveWeatherDetails(currentData.current) : null),
+    [currentData?.current]
+  );
+
+  const locale = lang === 'somali' ? 'so-SO' : 'en-US';
 
   return (
     <div className="p-4 lg:p-8 space-y-6">
@@ -150,10 +159,17 @@ export default function Dashboard() {
               <Card>
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase mb-4">{t('dashboard.additionalDetails')}</h3>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-2 bg-secondary rounded-lg">
-                    <span className="text-sm text-muted-foreground flex items-center gap-2"><Gauge size={16} /> {t('dashboard.pressure')}</span>
-                    <span className="font-bold text-foreground">{pressure.value} {pressure.label}</span>
-                  </div>
+                  <DetailRow icon={Gauge} label={t('dashboard.pressure')} value={`${pressure.value} ${pressure.label}`} />
+                  <DetailRow icon={Compass} label={t('dashboard.windDirection')} value={`${weatherDetails.windDirection} · ${weatherDetails.windDeg}°`} />
+                  <DetailRow icon={Sunrise} label={t('dashboard.sunrise')} value={formatMinutesAsTime(weatherDetails.sunriseMinutes, locale)} />
+                  <DetailRow icon={Sunset} label={t('dashboard.sunset')} value={formatMinutesAsTime(weatherDetails.sunsetMinutes, locale)} />
+                  <DetailRow
+                    icon={Activity}
+                    label={t('dashboard.airQuality')}
+                    value={`${weatherDetails.aqi} · ${t(aqiLevel(weatherDetails.aqi).key)}`}
+                    valueClassName={aqiLevel(weatherDetails.aqi).className}
+                  />
+                  <DetailRow icon={CloudRain} label={t('dashboard.rainProbability')} value={`${weatherDetails.rainProbability}%`} />
                 </div>
               </Card>
             </div>
