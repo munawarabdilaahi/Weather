@@ -30,3 +30,11 @@ export function convertPressure(hPa, unit) {
 export function pressureLabelFor(unit) {
   return unit === 'mmHg' ? 'mmHg' : 'mb'
 }
+
+export function windSpeedFor(kmh, unit) {
+  return { value: convertWindSpeed(kmh, unit), label: windLabelFor(unit) }
+}
+
+export function visibilityFor(km, unit) {
+  return { value: convertVisibility(km, unit), label: visibilityLabelFor(unit) }
+}
