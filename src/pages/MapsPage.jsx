@@ -1,138 +1,96 @@
-import { useState, useEffect, useRef, lazy, Suspense } from 'react';
-import { Search, SearchX, MapPin, Navigation2, Layers, Eye, RotateCw, CloudOff } from 'lucide-react';
+import { useState, useMemo, lazy, Suspense } from 'react';
+import { MapPin, Navigation2, Layers, Eye, RotateCw, CloudOff, Clock } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/Card';
 import { WeatherIcon } from '@/components/WeatherIcon';
 import { Spinner } from '@/components/Spinner';
 import { Skeleton } from '@/components/Skeleton';
 import { RadioGroup } from '@/components/RadioGroup';
+import { MapsSearch } from '@/components/MapsSearch';
 import { useToast } from '@/hooks/useToast';
 import { useApp } from '@/hooks/useApp';
 import { useSettings } from '@/hooks/useSettings';
 import { useWeather } from '@/hooks/useWeather';
-import { CITIES, CITIES_COORDS } from '@/constants/cities';
+import { CITIES_COORDS } from '@/constants/cities';
 import { WEATHER_LAYERS, getLayerConfig } from '@/constants/weatherLayers';
+import { MAP_HEIGHT_CLASS, DEFAULT_MAP_ZOOM } from '@/constants/layout';
 import { useTranslation } from '@/hooks/useTranslation';
+import { localeFor } from '@/utils/locale';
+import { findNearestCity } from '@/utils/geo';
 import { convertWindSpeed, windLabelFor } from '@/utils/units';
 
 const MapComponent = lazy(() => import('@/components/MapComponent'));
 
+const MAX_RECENT_SEARCHES = 5;
+const DEFAULT_CITY = 'Mogadishu';
+
 export default function MapsPage() {
   const { selectedCity, setSelectedCity } = useApp();
   const { settings } = useSettings();
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const { toast } = useToast();
-  const { data: weatherData, loading: weatherLoading, error: weatherError, isMock, refetch } = useWeather(selectedCity, {
+  const {
+    data: weatherData,
+    loading: weatherLoading,
+    error: weatherError,
+    isMock,
+    isOffline,
+    refetch,
+    lastUpdated,
+  } = useWeather(selectedCity, {
     autoRefresh: settings.autoRefresh,
     refreshInterval: settings.refreshInterval,
   });
-  const [searchValue, setSearchValue] = useState('');
-  const [activeIndex, setActiveIndex] = useState(-1);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [weatherLayer, setWeatherLayer] = useState('temperature');
-  const [mapZoom, setMapZoom] = useState(4);
+  const [mapZoom, setMapZoom] = useState(() => DEFAULT_MAP_ZOOM);
   const [recentSearches, setRecentSearches] = useState(['London', 'Tokyo']);
   const [locating, setLocating] = useState(false);
 
-  const prevErrorRef = useRef(null);
-  useEffect(() => {
-    if (weatherError && prevErrorRef.current !== weatherError) {
-      toast.error(t('maps.weatherLoadError'), t('maps.retryFailed'));
-    }
-    prevErrorRef.current = weatherError;
-  }, [weatherError, toast, t]);
+  const windLabel = windLabelFor(settings.windUnit);
+  const windDisplay = convertWindSpeed(weatherData?.current?.windSpeed, settings.windUnit);
 
-  const windLabel = windLabelFor(settings.windUnit)
-  const windDisplay = convertWindSpeed(weatherData?.current?.windSpeed, settings.windUnit)
-
-  const cityCoords = CITIES_COORDS[selectedCity] || CITIES_COORDS['Mogadishu'];
+  const cityCoords = CITIES_COORDS[selectedCity] || CITIES_COORDS[DEFAULT_CITY];
   const activeLayerConfig = getLayerConfig(weatherLayer);
-  const query = searchValue.trim();
-  const filteredCities = CITIES.filter((city) =>
-    city.toLowerCase().includes(query.toLowerCase())
+
+  const lastUpdatedLabel = useMemo(
+    () =>
+      lastUpdated
+        ? new Date(lastUpdated).toLocaleTimeString(localeFor(lang), {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : null,
+    [lastUpdated, lang]
   );
-  const showSearchResults = query.length > 0 && !searchLoading && filteredCities.length > 0;
 
-  useEffect(() => {
-    const id = setTimeout(() => setSearchLoading(false), 150);
-    return () => clearTimeout(id);
-  }, [searchValue]);
-
-  const handleCitySelect = (city) => {
+  function handleCitySelect(city) {
     setSelectedCity(city);
-    setSearchValue('');
-    setActiveIndex(-1);
-    setSearchLoading(false);
     if (!recentSearches.includes(city)) {
-      setRecentSearches([city, ...recentSearches].slice(0, 5));
+      setRecentSearches([city, ...recentSearches].slice(0, MAX_RECENT_SEARCHES));
       toast.success(t('maps.citySelected'), city);
     }
-  };
+  }
 
-  const handleSearchChange = (e) => {
-    setSearchValue(e.target.value);
-    setActiveIndex(0);
-    setSearchLoading(true);
-  };
-
-  const handleSearchKeyDown = (e) => {
-    if (filteredCities.length === 0) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      const nextIndex = (activeIndex + 1) % filteredCities.length;
-      setActiveIndex(nextIndex);
-      document.getElementById(`city-option-${nextIndex}`)?.scrollIntoView({ block: 'nearest' });
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      const nextIndex = (activeIndex - 1 + filteredCities.length) % filteredCities.length;
-      setActiveIndex(nextIndex);
-      document.getElementById(`city-option-${nextIndex}`)?.scrollIntoView({ block: 'nearest' });
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      const city = filteredCities[activeIndex] ?? filteredCities[0];
-      handleCitySelect(city);
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      setSearchValue('');
-      setActiveIndex(-1);
-      setSearchLoading(false);
-    }
-  };
-
-  const handleUseMyLocation = () => {
-    if (!settings.gpsEnabled) return
-    if (locating) return
+  function handleUseMyLocation() {
+    if (!settings.gpsEnabled || locating) return;
     if (!('geolocation' in navigator)) {
       toast.error(t('maps.geoNotSupported'));
-      return
+      return;
     }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords;
-        const entries = Object.entries(CITIES_COORDS);
-        let best = { city: entries[0][0], lat: entries[0][1].lat, lng: entries[0][1].lng };
-        let bestDist = Math.hypot(best.lat - latitude, best.lng - longitude);
-        for (let i = 1; i < entries.length; i++) {
-          const [city, { lat, lng }] = entries[i];
-          const dist = Math.hypot(lat - latitude, lng - longitude);
-          if (dist < bestDist) { bestDist = dist; best = { city, lat, lng }; }
-        }
-        setSelectedCity(best.city);
+        setSelectedCity(findNearestCity(position.coords.latitude, position.coords.longitude).city);
         setLocating(false);
-        toast.success(t('maps.locationFound'), best.city);
+        toast.success(t('maps.locationFound'));
       },
       (err) => {
         setLocating(false);
-        if (err.code === 1) return
-        toast.error(t('maps.geoError'))
+        if (err.code === 1) return;
+        toast.error(t('maps.geoError'));
       }
     );
-  };
-
-  const handleRetry = () => {
-    refetch();
-  };
+  }
 
   return (
     <div className="p-4 lg:p-8">
@@ -140,71 +98,29 @@ export default function MapsPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">{t('maps.title')}</h1>
           <p className="text-muted-foreground">{t('maps.subtitle')}</p>
+
+          {isOffline && (
+            <div className="mt-4 bg-secondary/60 border border-border rounded-lg px-4 py-3 text-center animate-fade-up" role="status">
+              <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                <CloudOff size={16} aria-hidden="true" />
+                {t('maps.offline')}
+              </p>
+            </div>
+          )}
+
           {isMock && (
-            <div className="mt-4 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-2 text-center">
-              <p className="text-sm text-amber-400 font-medium">{t('dashboard.demoData')}</p>
+            <div className="mt-4 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 text-center" role="status">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-400">{t('dashboard.demoData')}</p>
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
-          <div className="space-y-4 order-2 lg:order-none">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+          <div className="md:col-span-1 space-y-4 order-2 md:order-none">
             <Card>
               <CardHeader><CardTitle>{t('maps.searchCities')}</CardTitle></CardHeader>
               <CardContent>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                  <input
-                    type="text"
-                    placeholder={t('maps.searchPlaceholder')}
-                    value={searchValue}
-                    onChange={handleSearchChange}
-                    onKeyDown={handleSearchKeyDown}
-                    role="combobox"
-                    aria-haspopup="listbox"
-                    aria-expanded={query.length > 0 && !searchLoading}
-                    aria-controls="city-listbox"
-                    aria-activedescendant={showSearchResults && activeIndex >= 0 ? `city-option-${activeIndex}` : undefined}
-                    aria-autocomplete="list"
-                    aria-label={t('maps.searchPlaceholder')}
-                    className="w-full pl-10 pr-4 py-2 bg-secondary border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-
-                {query.length > 0 && searchLoading && (
-                  <div className="mt-3 flex items-center justify-center gap-2 py-3" role="status">
-                    <Spinner className="w-4 h-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">{t('maps.searching')}</span>
-                  </div>
-                )}
-
-                {query.length > 0 && !searchLoading && filteredCities.length === 0 && (
-                  <div className="mt-3 text-center py-4 rounded-lg bg-secondary/50 border border-border" role="status">
-                    <SearchX size={20} className="mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">{t('maps.noCitiesFound')}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{t('maps.noCitiesHint')}</p>
-                  </div>
-                )}
-
-                {showSearchResults && (
-                  <ul id="city-listbox" role="listbox" aria-label={t('maps.searchCities')} className="mt-3 space-y-2 fade-in">
-                    {filteredCities.map((city, index) => (
-                      <li
-                        key={city}
-                        id={`city-option-${index}`}
-                        role="option"
-                        aria-selected={index === activeIndex}
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => handleCitySelect(city)}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm cursor-pointer transition ${
-                          index === activeIndex ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground hover:bg-secondary/80'
-                        }`}
-                      >
-                        {city}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <MapsSearch onSelect={handleCitySelect} />
               </CardContent>
             </Card>
 
@@ -216,16 +132,12 @@ export default function MapsPage() {
                 disabled={locating}
                 aria-live="polite"
               >
-                {locating ? (
-                  <Spinner className="w-[18px] h-[18px]" />
-                ) : (
-                  <Navigation2 size={18} />
-                )}
+                {locating ? <Spinner className="w-[18px] h-[18px]" /> : <Navigation2 size={18} aria-hidden="true" />}
                 {locating ? t('maps.locating') : t('maps.useMyLocation')}
               </Button>
             ) : (
               <div className="p-4 bg-secondary/50 border border-border rounded-xl text-center">
-                <Navigation2 size={20} className="mx-auto mb-2 text-muted-foreground opacity-50" />
+                <Navigation2 size={20} className="mx-auto mb-2 text-muted-foreground opacity-50" aria-hidden="true" />
                 <p className="text-sm text-muted-foreground">{t('maps.gpsDisabled')}</p>
                 <p className="text-xs text-muted-foreground mt-1">{t('maps.gpsDisabledHint')}</p>
               </div>
@@ -234,15 +146,25 @@ export default function MapsPage() {
             {WEATHER_LAYERS.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Layers size={18} /> {t('maps.weatherLayer')}</CardTitle>
+                  <CardTitle className="flex items-center gap-2"><Layers size={18} aria-hidden="true" /> {t('maps.weatherLayer')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <RadioGroup label={t('maps.weatherLayer')} className="space-y-2">
                     {WEATHER_LAYERS.map((layer) => (
-                      <button key={layer} role="radio" aria-checked={weatherLayer === layer} onClick={() => setWeatherLayer(layer)}
+                      <button
+                        key={layer}
+                        type="button"
+                        role="radio"
+                        aria-checked={weatherLayer === layer}
+                        onClick={() => setWeatherLayer(layer)}
                         className={`w-full text-left px-3 py-2 rounded-lg transition text-sm capitalize ${
-                          weatherLayer === layer ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground hover:bg-secondary/80'
-                        }`}>{t('maps.layer' + layer.charAt(0).toUpperCase() + layer.slice(1))}</button>
+                          weatherLayer === layer
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary text-foreground hover:bg-secondary/80'
+                        }`}
+                      >
+                        {t('maps.layer' + layer.charAt(0).toUpperCase() + layer.slice(1))}
+                      </button>
                     ))}
                   </RadioGroup>
                 </CardContent>
@@ -252,7 +174,7 @@ export default function MapsPage() {
             {activeLayerConfig && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Eye size={18} /> {t('maps.legend')}</CardTitle>
+                  <CardTitle className="flex items-center gap-2"><Eye size={18} aria-hidden="true" /> {t('maps.legend')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-xs">
                   {activeLayerConfig.legend.map((item) => (
@@ -270,9 +192,13 @@ export default function MapsPage() {
                 <CardHeader><CardTitle>{t('maps.recentlySearched')}</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
                   {recentSearches.map((city) => (
-                    <button key={city} onClick={() => handleCitySelect(city)}
-                      className="w-full text-left px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition text-sm text-foreground flex items-center gap-2">
-                      <MapPin size={14} /> {city}
+                    <button
+                      key={city}
+                      type="button"
+                      onClick={() => handleCitySelect(city)}
+                      className="w-full text-left px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition text-sm text-foreground flex items-center gap-2"
+                    >
+                      <MapPin size={14} aria-hidden="true" /> {city}
                     </button>
                   ))}
                 </CardContent>
@@ -280,15 +206,17 @@ export default function MapsPage() {
             )}
           </div>
 
-          <div className="lg:col-span-3 space-y-4 order-1 lg:order-none">
-            <Suspense fallback={
-              <div className="h-[340px] sm:h-[480px] lg:h-[600px] bg-secondary rounded-2xl flex items-center justify-center animate-pulse" role="status">
-                <div className="text-center">
-                  <div className="animate-spin mb-4"><MapPin size={40} className="text-primary" /></div>
-                  <p className="text-muted-foreground">{t('maps.loadingMap')}</p>
+          <div className="md:col-span-2 lg:col-span-3 space-y-4 order-1 md:order-none">
+            <Suspense
+              fallback={
+                <div className={`${MAP_HEIGHT_CLASS} bg-secondary rounded-2xl flex items-center justify-center animate-pulse`} role="status">
+                  <div className="text-center">
+                    <div className="animate-spin mb-4"><MapPin size={40} className="text-primary" /></div>
+                    <p className="text-muted-foreground">{t('maps.loadingMap')}</p>
+                  </div>
                 </div>
-              </div>
-            }>
+              }
+            >
               <MapComponent
                 selectedCity={selectedCity}
                 lat={cityCoords.lat}
@@ -301,8 +229,16 @@ export default function MapsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><MapPin size={20} className="text-primary" /> {selectedCity}</CardTitle>
-                <CardDescription>{cityCoords.lat.toFixed(4)}°, {cityCoords.lng.toFixed(4)}°</CardDescription>
+                <CardTitle className="flex items-center gap-2"><MapPin size={20} className="text-primary" aria-hidden="true" /> {selectedCity}</CardTitle>
+                <CardDescription>
+                  {cityCoords.lat.toFixed(4)}°, {cityCoords.lng.toFixed(4)}°
+                </CardDescription>
+                {lastUpdatedLabel && (
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <Clock size={12} aria-hidden="true" />
+                    {t('maps.lastUpdated')} {lastUpdatedLabel}
+                  </p>
+                )}
               </CardHeader>
               <CardContent>
                 {weatherLoading ? (
@@ -318,19 +254,21 @@ export default function MapsPage() {
                   </div>
                 ) : weatherError ? (
                   <div className="text-center py-6" role="alert">
-                    <CloudOff size={24} className="mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground mb-4">{t('maps.noData')}</p>
-                    <Button variant="secondary" size="sm" onClick={handleRetry} className="mx-auto">
+                    <CloudOff size={24} className="mx-auto mb-2 text-muted-foreground" aria-hidden="true" />
+                    <p className="text-sm text-muted-foreground mb-1">{t('maps.loadFailed')} {selectedCity}</p>
+                    <p className="text-xs text-muted-foreground mb-4">{t('maps.retryFailed')}</p>
+                    <Button variant="primary" size="sm" onClick={refetch} className="mx-auto">
                       <RotateCw size={16} aria-hidden="true" /> {t('maps.retry')}
                     </Button>
                   </div>
                 ) : !weatherData ? (
-                  <div className="text-center py-6">
-                    <CloudOff size={24} className="mx-auto mb-2 text-muted-foreground" />
+                  <div className="text-center py-6" role="status">
+                    <CloudOff size={24} className="mx-auto mb-2 text-muted-foreground" aria-hidden="true" />
                     <p className="text-sm text-muted-foreground">{t('maps.noData')}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('maps.emptyHint')}</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 fade-in">
+                  <div key={selectedCity} className="grid grid-cols-2 md:grid-cols-4 gap-4 fade-in">
                     <div className="text-center">
                       <div className="flex justify-center mb-2"><WeatherIcon type={weatherData.current.icon} size={32} /></div>
                       <p className="text-sm text-muted-foreground">{t('maps.condition')}</p>
