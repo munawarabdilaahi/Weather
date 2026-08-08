@@ -104,7 +104,7 @@ export function Header({ onMobileMenuClick, isMobileOpen }) {
               role="combobox"
               aria-label={t('header.searchPlaceholder')}
               aria-haspopup="listbox"
-              aria-expanded={showResults}
+              aria-expanded={showResults && filteredCities.length > 0}
               aria-controls="header-city-listbox"
               aria-autocomplete="list"
               aria-activedescendant={showResults && activeIndex >= 0 ? `header-city-option-${activeIndex}` : undefined}
