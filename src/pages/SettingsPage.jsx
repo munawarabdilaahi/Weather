@@ -5,6 +5,7 @@ import { Button } from '@/components/Button';
 import { Toggle } from '@/components/Toggle';
 import { RadioGroup } from '@/components/RadioGroup';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { CitySelect, UnitSelect, LanguageSelect, RefreshIntervalSelect } from '@/components/ReusableSelect';
 import { useSettings } from '@/hooks/useSettings';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useToast } from '@/hooks/useToast';
@@ -131,42 +132,35 @@ const UnitsSection = memo(function UnitsSection({ tempUnit, windUnit, pressureUn
 
         <div>
           <label className="text-sm font-medium text-foreground block mb-2" htmlFor="settings-wind-unit">{t('settings.windSpeed')}</label>
-          <select
+          <UnitSelect
             id="settings-wind-unit"
             value={windUnit}
-            onChange={(e) => onUpdate('windUnit', e.target.value)}
+            onChange={(val) => onUpdate('windUnit', val)}
+            options={[{ value: 'kmh', label: t('settings.windKmh') }, { value: 'mph', label: t('settings.windMph') }, { value: 'ms', label: t('settings.windMs') }]}
             className={SELECT_CLASSES}
-          >
-            <option value="kmh">{t('settings.windKmh')}</option>
-            <option value="mph">{t('settings.windMph')}</option>
-            <option value="ms">{t('settings.windMs')}</option>
-          </select>
+          />
         </div>
 
         <div>
           <label className="text-sm font-medium text-foreground block mb-2" htmlFor="settings-pressure-unit">{t('settings.pressure')}</label>
-          <select
+          <UnitSelect
             id="settings-pressure-unit"
             value={pressureUnit}
-            onChange={(e) => onUpdate('pressureUnit', e.target.value)}
+            onChange={(val) => onUpdate('pressureUnit', val)}
+            options={[{ value: 'hPa', label: t('settings.pressureHpa') }, { value: 'mmHg', label: t('settings.pressureMmhg') }]}
             className={SELECT_CLASSES}
-          >
-            <option value="hPa">{t('settings.pressureHpa')}</option>
-            <option value="mmHg">{t('settings.pressureMmhg')}</option>
-          </select>
+          />
         </div>
 
         <div>
           <label className="text-sm font-medium text-foreground block mb-2" htmlFor="settings-visibility-unit">{t('settings.visibility')}</label>
-          <select
+          <UnitSelect
             id="settings-visibility-unit"
             value={visibilityUnit}
-            onChange={(e) => onUpdate('visibilityUnit', e.target.value)}
+            onChange={(val) => onUpdate('visibilityUnit', val)}
+            options={[{ value: 'km', label: t('settings.visibilityKm') }, { value: 'miles', label: t('settings.visibilityMiles') }]}
             className={SELECT_CLASSES}
-          >
-            <option value="km">{t('settings.visibilityKm')}</option>
-            <option value="miles">{t('settings.visibilityMiles')}</option>
-          </select>
+          />
         </div>
       </CardContent>
     </Card>
@@ -184,15 +178,12 @@ const LanguageSection = memo(function LanguageSection({ language, onUpdate }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <select
-          aria-label={t('settings.language')}
+        <LanguageSelect
           value={language}
-          onChange={(e) => onUpdate('language', e.target.value)}
+          onChange={(val) => onUpdate('language', val)}
+          languages={['english', 'somali']}
           className={SELECT_CLASSES}
-        >
-          <option value="english">{t('settings.langEnglish')}</option>
-          <option value="somali">{t('settings.langSomali')}</option>
-        </select>
+        />
       </CardContent>
     </Card>
   );
@@ -223,16 +214,13 @@ const LocationSection = memo(function LocationSection({ gpsEnabled, defaultCity,
 
         <div>
           <label className="text-sm font-medium text-foreground block mb-2" htmlFor="settings-default-city">{t('settings.defaultCity')}</label>
-          <select
+          <CitySelect
             id="settings-default-city"
             value={defaultCity}
-            onChange={(e) => onUpdate('defaultCity', e.target.value)}
+            onChange={(val) => onUpdate('defaultCity', val)}
+            cities={CITIES}
             className={SELECT_CLASSES}
-          >
-            {CITIES.map(city => (
-              <option key={city} value={city}>{city}</option>
-            ))}
-          </select>
+          />
           <p className="text-xs text-muted-foreground mt-1">{t('settings.defaultCityHelp')}</p>
         </div>
       </CardContent>
@@ -266,17 +254,13 @@ const PreferencesSection = memo(function PreferencesSection({ autoRefresh, refre
         {autoRefresh && (
           <div>
             <label className="text-sm font-medium text-foreground block mb-2" htmlFor="settings-refresh-interval">{t('settings.refreshInterval')}</label>
-            <select
+            <RefreshIntervalSelect
               id="settings-refresh-interval"
               value={refreshInterval}
-              onChange={(e) => onUpdate('refreshInterval', parseInt(e.target.value))}
+              onChange={(val) => onUpdate('refreshInterval', val)}
+              options={[{ value: 5, label: t('settings.interval5') }, { value: 10, label: t('settings.interval10') }, { value: 30, label: t('settings.interval30') }, { value: 60, label: t('settings.interval60') }]}
               className={SELECT_CLASSES}
-            >
-              <option value="5">{t('settings.interval5')}</option>
-              <option value="10">{t('settings.interval10')}</option>
-              <option value="30">{t('settings.interval30')}</option>
-              <option value="60">{t('settings.interval60')}</option>
-            </select>
+            />
           </div>
         )}
       </CardContent>
