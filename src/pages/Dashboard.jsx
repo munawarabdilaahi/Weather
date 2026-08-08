@@ -8,6 +8,7 @@ import { Spinner } from '@/components/Spinner';
 import { Skeleton } from '@/components/Skeleton';
 import { RadioGroup } from '@/components/RadioGroup';
 import { DetailRow } from '@/components/DetailRow';
+import { CitySelect } from '@/components/ReusableSelect';
 import { useApp } from '@/hooks/useApp';
 import { useSettings } from '@/hooks/useSettings';
 import { useWeather } from '@/hooks/useWeather';
@@ -69,16 +70,32 @@ export default function Dashboard() {
         </div>
 
         <div className="flex gap-3 flex-col sm:flex-row w-full sm:w-auto">
-          <select
+          <CitySelect
             value={selectedCity}
-            onChange={(e) => setSelectedCity(e.target.value)}
-            aria-label={t('dashboard.selectCity')}
-            className="px-4 py-2 bg-secondary border border-border rounded-lg text-foreground"
-          >
-            {CITIES.map((city) => (
-              <option key={city} value={city}>{city}</option>
-            ))}
-          </select>
+            onChange={setSelectedCity}
+            cities={CITIES}
+            className="w-full sm:w-auto"
+          />
+          <RadioGroup label={t('dashboard.tempUnitAria')} className="flex items-center bg-secondary rounded-lg p-0.5">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={unit === 'C'}
+              onClick={() => updateSetting('tempUnit', 'C')}
+              className={`px-4 py-2 rounded transition text-sm font-medium ${
+                unit === 'C' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >°C</button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={unit === 'F'}
+              onClick={() => updateSetting('tempUnit', 'F')}
+              className={`px-4 py-2 rounded transition text-sm font-medium ${
+                unit === 'F' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >°F</button>
+          </RadioGroup>
 
           <RadioGroup label={t('dashboard.tempUnitAria')} className="flex items-center bg-secondary rounded-lg p-0.5">
             <button
